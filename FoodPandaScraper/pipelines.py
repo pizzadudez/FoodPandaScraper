@@ -10,11 +10,11 @@ import json
 
 class FoodpandascraperPipeline(object):
     def open_spider(self, spider):
-        self.file = open('scrapped.json', 'w')
-        # self.file.write("[")
+        self.file = open('output/scrapped.json', 'w')
+        self.file.write("[\n")
     
     def close_spider(self, spider):
-        # self.file.write("]")
+        self.file.write("]")
         self.file.close()
 
     def process_item(self, item, spider):
