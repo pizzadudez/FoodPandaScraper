@@ -1,0 +1,248 @@
+{
+  "Pizza Mica 3+1": {
+    "Alege prima pizza": [
+      {
+        "name": "Pizza Prosciutto",
+        "price": "+ 15"
+      },
+      {
+        "name": "Pizza Prosciutto e Funghi",
+        "price": "+ 15"
+      },
+      {
+        "name": "Pizza Capriciosa",
+        "price": "+ 15"
+      },
+      {
+        "name": "Pizza Polo",
+        "price": "+ 16"
+      },
+      {
+        "name": "Pizza Rustica",
+        "price": "+ 17"
+      },
+      {
+        "name": "Pizza Transilvania",
+        "price": "+ 17"
+      },
+      {
+        "name": "Pizza Diavolo",
+        "price": "+ 13.5"
+      },
+      {
+        "name": "Pizza Mexicana",
+        "price": "+ 16"
+      },
+      {
+        "name": "Pizza Kronstadt",
+        "price": "+ 17"
+      },
+      {
+        "name": "Pizza Quatro Stagioni",
+        "price": "+ 16"
+      },
+      {
+        "name": "Pizza Quatro Formagi",
+        "price": "+ 17"
+      },
+      {
+        "name": "Pizza Ton",
+        "price": "+ 17"
+      }
+    ],
+    "Alege a doua pizza": [
+      {
+        "name": "Pizza Prosciutto",
+        "price": "+ 15"
+      },
+      {
+        "name": "Pizza Prosciutto e Funghi",
+        "price": "+ 15"
+      },
+      {
+        "name": "Pizza Capriciosa",
+        "price": "+ 15"
+      },
+      {
+        "name": "Pizza Polo",
+        "price": "+ 16"
+      },
+      {
+        "name": "Pizza Rustica",
+        "price": "+ 17"
+      },
+      {
+        "name": "Pizza Transilvania",
+        "price": "+ 17"
+      },
+      {
+        "name": "Pizza Diavolo",
+        "price": "+ 13.5"
+      },
+      {
+        "name": "Pizza Mexicana",
+        "price": "+ 16"
+      },
+      {
+        "name": "Pizza Kronstadt",
+        "price": "+ 17"
+      },
+      {
+        "name": "Pizza Quatro Stagioni",
+        "price": "+ 16"
+      },
+      {
+        "name": "Pizza Quatro Formagi",
+        "price": "+ 17"
+      },
+      {
+        "name": "Pizza Ton",
+        "price": "+ 17"
+      }
+    ],
+    "Alege a treia pizza": [
+      {
+        "name": "Pizza Prosciutto",
+        "price": "+ 15"
+      },
+      {
+        "name": "Pizza Prosciutto e Funghi",
+        "price": "+ 15"
+      },
+      {
+        "name": "Pizza Capriciosa",
+        "price": "+ 15"
+      },
+      {
+        "name": "Pizza Polo",
+        "price": "+ 16"
+      },
+      {
+        "name": "Pizza Rustica",
+        "price": "+ 17"
+      },
+      {
+        "name": "Pizza Transilvania",
+        "price": "+ 17"
+      },
+      {
+        "name": "Pizza Diavolo",
+        "price": "+ 13.5"
+      },
+      {
+        "name": "Pizza Mexicana",
+        "price": "+ 16"
+      },
+      {
+        "name": "Pizza Kronstadt",
+        "price": "+ 17"
+      },
+      {
+        "name": "Pizza Quatro Stagioni",
+        "price": "+ 16"
+      },
+      {
+        "name": "Pizza Quatro Formagi",
+        "price": "+ 17"
+      },
+      {
+        "name": "Pizza Ton",
+        "price": "+ 17"
+      }
+    ],
+    "Alege pizza gratis": [
+      {
+        "name": "Pizza Prosciutto",
+        "price": null
+      },
+      {
+        "name": "Pizza Prosciutto e Funghi",
+        "price": null
+      },
+      {
+        "name": "Pizza Capriciosa",
+        "price": null
+      },
+      {
+        "name": "Pizza Diavolo",
+        "price": null
+      },
+      {
+        "name": "Pizza Calzone e Pomodoro",
+        "price": null
+      }
+    ]
+  },
+  "Oferta | Meniuri": {
+    "Alege primul meniu": [
+      {
+        "name": "Meniu Ceafa la Gratar",
+        "price": "+ 20"
+      },
+      {
+        "name": "Meniu Snitel Parizian",
+        "price": "+ 18"
+      },
+      {
+        "name": "Meniu Aripioare Picante",
+        "price": "+ 18"
+      },
+      {
+        "name": "Meniu Crispy de Pui",
+        "price": "+ 18"
+      },
+      {
+        "name": "Meniu Pui la Gratar",
+        "price": "+ 20"
+      },
+      {
+        "name": "Meniu Ciocanele la Ceaun",
+        "price": "+ 18"
+      },
+      {
+        "name": "Meniu Pulpe dezosate",
+        "price": "+ 20"
+      }
+    ],
+    "Alege al doilea meniu": [
+      {
+        "name": "Meniu Ceafa la Gratar",
+        "price": "+ 20"
+      },
+      {
+        "name": "Meniu Snitel Parizian",
+        "price": "+ 18"
+      },
+      {
+        "name": "Meniu Aripioare Picante",
+        "price": "+ 18"
+      },
+      {
+        "name": "Meniu Crispy de Pui",
+        "price": "+ 18"
+      },
+      {
+        "name": "Meniu Pui la Gratar",
+        "price": "+ 20"
+      },
+      {
+        "name": "Meniu Ciocanele la Ceaun",
+        "price": "+ 18"
+      },
+      {
+        "name": "Meniu Pulpe dezosate",
+        "price": "+ 20"
+      }
+    ],
+    "Alege clatitele gratis": [
+      {
+        "name": "Clatite cu Finetti",
+        "price": null
+      },
+      {
+        "name": "Clatite cu gem",
+        "price": null
+      }
+    ]
+  }
+},

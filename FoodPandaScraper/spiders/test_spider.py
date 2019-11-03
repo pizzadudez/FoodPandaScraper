@@ -27,12 +27,40 @@ class TestSpiderSpider(scrapy.Spider):
                 args={ 'lua_source': click_script, 'html': 1 })
 
     def parse(self, response):
-        soup = bs(response.data['2'], 'html.parser')
-        
-        parent = soup.find('div', {'class': ['product-topping-list', 'required-list']})
-        found1 = parent.find('div', {'class': ['js-tooping-item', 'js-topping-option-radio']})
-        found = found1.find('span', {'class': 'radio-text'})
-        yield {'found': found.text}
+        data = {}
+        for res in response.data.values():
+            # Parse String html snapshot
+            soup = bs(res, 'html.parser')
+            # Get product name
+            product_name = soup.select_one('h2.product-name').text.strip()
+            data[product_name] = {}
+            # Parse toppings
+            toppings = soup.find('div', {'class': 'toppings'})
+            topping_categories = toppings.find_all('div', {'class': 'product-topping-list'})
+            for category in topping_categories:
+                category_name = category.select_one('h3 > span').text.strip()
+                
+                items = category.select_one('.js-topping-options').select('.js-topping-option-radio')
+                parsed_items = []
+                for item in items:
+                    name = item.select_one('.radio-text')
+                    price = item.select_one('.product-topping-price')
+                    parsed_items.append({
+                        'name': name.text.strip() if name else None,
+                        'price': price.text.strip() if price else None
+                    })
+                data[product_name][category_name] = parsed_items
+
+        yield data
+
+        # parent = soup.find('div', {'class': ['product-topping-list', 'required-list']})
+        # found1 = parent.find('div', {'class': ['js-tooping-item', 'js-topping-option-radio']})
+        # found = parent.find_all('span', {'class': 'radio-text'})
+        # topping_list = [x.text.strip() for x in found]
+        # yield {'found': topping_list}
+
+
+
         # inspect_response(response, self)
         # text = response.text.xpath('/html')
         # yield { 'text': text }

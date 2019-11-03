@@ -35,14 +35,15 @@ function main(splash)
     local menu_items = splash:select_all(selector)
 
     for i, item in pairs(menu_items) do
-        if i == 3 then break end
-        local menu_item = get_element_dim(item)
-        splash:mouse_click(menu_item.x, menu_item.y)
-        splash:wait(2)
-        -- table.insert(response_list, splash:html())
-        response_list[i] = splash:html()
-        splash:send_keys('<Escape>')
-        splash:wait(1)
+        local has_topping = item.node:getAttribute("data-has-priced-topping")
+        if has_topping == 'true' then
+            local menu_item = get_element_dim(item)
+            splash:mouse_click(menu_item.x, menu_item.y)
+            splash:wait(2)
+            response_list[i] = splash:html()
+            splash:send_keys('<Escape>')
+            splash:wait(1)
+        end
     end
 
     return response_list
