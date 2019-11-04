@@ -17,9 +17,9 @@ class MainSpider(scrapy.Spider):
     allowed_domains = ['foodpanda.ro']
     start_urls = [
         'https://www.foodpanda.ro/restaurant/v1js/hopaa',
-        # 'https://www.foodpanda.ro/restaurant/v4rj/pizza-transilvania',
-        # 'https://www.foodpanda.ro/restaurant/v5wn/pizza-adaggio',
-        # 'https://www.foodpanda.ro/restaurant/v4yi/big-belly-vendor',
+        'https://www.foodpanda.ro/restaurant/v4rj/pizza-transilvania',
+        'https://www.foodpanda.ro/restaurant/v5wn/pizza-adaggio',
+        'https://www.foodpanda.ro/restaurant/v4yi/big-belly-vendor',
     ]
     lua_script = open(LUA_SCRIPT, 'r').read()
 

@@ -13,7 +13,7 @@ LUA_SCRIPT = path.abspath(path.join(dirpath, '..', 'lua_scripts\\main.lua'))
 
 
 class MainSpider(scrapy.Spider):
-    name = 'main_spider'
+    name = 'main_spider_old'
     allowed_domains = ['foodpanda.ro']
     start_urls = [
         # 'https://www.foodpanda.ro/restaurant/v4rj/pizza-transilvania',
