@@ -1,0 +1,3 @@
+- [ ] Install postgress
+- [ ] connect to db with sqlalchemy
+- [ ] define models

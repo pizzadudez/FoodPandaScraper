@@ -14,6 +14,14 @@ BOT_NAME = 'FoodPandaScraper'
 SPIDER_MODULES = ['FoodPandaScraper.spiders']
 NEWSPIDER_MODULE = 'FoodPandaScraper.spiders'
 
+DATABASE = {
+    'drivername': 'postgres',
+    'host': 'localhost',
+    'port': '5432',
+    'username': 'postgres',
+    'password': 'foodpanda',
+    'database': 'scrape',
+}
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'FoodPandaScraper (+http://www.yourdomain.com)'
@@ -74,6 +82,7 @@ HTTPCACHE_STORAGE = 'scrapy_splash.SplashAwareFSCacheStorage'
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
+   'FoodPandaScraper.pipelines.VendorPipeline': 100,
    'FoodPandaScraper.pipelines.FoodpandascraperPipeline': 300,
 }
 
@@ -97,3 +106,4 @@ ITEM_PIPELINES = {
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+

@@ -4,8 +4,11 @@ from os import path
 from bs4 import BeautifulSoup as bs
 
 import scrapy
-from scrapy_splash import SplashRequest
+from scrapy.http import Request
 from scrapy.shell import inspect_response
+from scrapy_splash import SplashRequest
+
+from FoodPandaScraper.items import TestItem
 
 
 dirpath = path.dirname(__file__)
@@ -21,23 +24,60 @@ class MainSpider(scrapy.Spider):
         'https://www.foodpanda.ro/restaurant/v5wn/pizza-adaggio',
         'https://www.foodpanda.ro/restaurant/v4yi/big-belly-vendor',
     ]
+    # start_urls = [
+    #     'https://www.foodpanda.ro',
+    # ]
     lua_script = open(LUA_SCRIPT, 'r').read()
+    json = {}
 
     def start_requests(self):
+        """Starts the request chain."""
+
         for url in self.start_urls:
-            args = {
-                'lua_source': self.lua_script,
-                'timeout': 360,
-                'html': 1,
-            }
             yield SplashRequest(
                 url=url,
-                callback=self.parse,
+                callback=self.parse_vendor,
                 endpoint='execute',
-                args=args
+                args={
+                    'lua_source': self.lua_script,
+                    'timeout': 360,
+                    'html': 1,
+                }
             )
 
-    def parse(self, response):
+        # for url in self.start_urls:
+        #     yield Request(url=url, callback=self.crawl_cities)
+
+    def crawl_cities(self, response):
+        """Initiate vendor crawl for all cities."""
+
+        response_html = response.text
+        soup = bs(response_html, 'html.parser')
+        city_list = soup.select('section.home-cities a.city-tile')
+        city_urls = [response.url + x['href'] for x in city_list]
+
+        for city_url in city_urls:
+            item = TestItem()
+            request = Request(
+                url=city_url,
+                callback=self.crawl_vendors,
+                meta={'parent': city_url}
+            )
+            yield request
+
+    def crawl_vendors(self, response):
+        """Initiate vendor parse for all vendors."""
+
+        response_html = response.text
+        soup = bs(response_html, 'html.parser')
+        vendor_list = soup.select('div.restaurants-container ul.vendor-list > li > a')
+        vendor_urls = [x['href'] for x in vendor_list]
+        
+        city_url = response.meta['parent']
+        yield {'name': vendor_urls[0]}
+        # return {'vendor_urls': vendor_urls}
+
+    def parse_vendor(self, response):
         # inspect_response(response, self)
         parse_item = {}
         html = response.data.get('html', None)
