@@ -1,3 +1,3 @@
-- [ ] Install postgress
-- [ ] connect to db with sqlalchemy
+- [x] Install postgress
+- [x] connect to db with sqlalchemy
 - [ ] define models

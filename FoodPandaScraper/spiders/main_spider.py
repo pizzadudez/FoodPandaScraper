@@ -8,7 +8,7 @@ from scrapy.http import Request
 from scrapy.shell import inspect_response
 from scrapy_splash import SplashRequest
 
-from FoodPandaScraper.items import TestItem
+from FoodPandaScraper.items import VendorItem
 
 
 dirpath = path.dirname(__file__)
@@ -19,10 +19,10 @@ class MainSpider(scrapy.Spider):
     name = 'main_spider'
     allowed_domains = ['foodpanda.ro']
     start_urls = [
-        'https://www.foodpanda.ro/restaurant/v1js/hopaa',
+        # 'https://www.foodpanda.ro/restaurant/v1js/hopaa',
         'https://www.foodpanda.ro/restaurant/v4rj/pizza-transilvania',
-        'https://www.foodpanda.ro/restaurant/v5wn/pizza-adaggio',
-        'https://www.foodpanda.ro/restaurant/v4yi/big-belly-vendor',
+        # 'https://www.foodpanda.ro/restaurant/v5wn/pizza-adaggio',
+        # 'https://www.foodpanda.ro/restaurant/v4yi/big-belly-vendor',
     ]
     # start_urls = [
     #     'https://www.foodpanda.ro',
@@ -57,7 +57,6 @@ class MainSpider(scrapy.Spider):
         city_urls = [response.url + x['href'] for x in city_list]
 
         for city_url in city_urls:
-            item = TestItem()
             request = Request(
                 url=city_url,
                 callback=self.crawl_vendors,
@@ -78,12 +77,23 @@ class MainSpider(scrapy.Spider):
         # return {'vendor_urls': vendor_urls}
 
     def parse_vendor(self, response):
-        # inspect_response(response, self)
-        parse_item = {}
-        html = response.data.get('html', None)
+        html_string = response.data.get('html', None)
         modals = response.data.get('modals', None)
+        soup = bs(html_string, 'html.parser')
+        vendor_item = {}
 
-        soup = bs(html, 'html.parser')
+        # Parse Vendor
+        vendor_item['url'] = response.url
+        description_modal = soup.select_one('div.modal.rich-description div.vendor-info-page')
+        # vendor_item['image'] = 
+        info = description_modal.select_one('div.infos')
+        vendor_item['name'] = info.select_one('h1.vendor-name').text.strip()
+        vendor_item['rating'] = info.select_one('span.rating strong').text.strip()
+        panel = description_modal.select_one('div.panel div.content')
+        vendor_item['address'] = panel.select_one('p.vendor-location').text.strip()
+
+        # Parse Dish List
+        parse_item = {}
         menu_categories = soup.select('div.dish-category-header')
         menu_categories_names = [x.text.strip() for x in menu_categories]
         menu_lists = soup.select('div.dish-category-header + ul.dish-list')
@@ -100,15 +110,20 @@ class MainSpider(scrapy.Spider):
                 modal = modals.get(str(i+1), {}).get(str(j+1), {}).get('modal_content', None)
 
                 item_list.append({
-                    'dish': {
-                        'name': info_title.text.strip(),
-                        'description': info_description.text.strip() if info_description else None,
-                        'image': image.get('data-src', None) if image else None,
-                    },
+                    'name': info_title.text.strip(),
+                    'description': info_description.text.strip() if info_description else None,
+                    'image': image.get('data-src', None) if image else None,
+
                     'options': self.parse_modal(modal),
                 })
 
-        yield parse_item
+        yield {
+            'vendor': vendor_item,
+            'dish_list': parse_item,
+        }
+
+    def parse_dishes(self):
+        pass
 
     def parse_modal(self, modal):
         html = bs(modal, 'html.parser') if modal else None
