@@ -20,6 +20,8 @@ class VendorPipeline(object):
 
     def process_item(self, item, spider):
         session = self.Session()
+        if not item.get('vendor', None):
+            return item
         try:
             vendor = Vendor(**item['vendor'])
             session.add(vendor)

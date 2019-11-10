@@ -78,7 +78,7 @@ class MainSpider(scrapy.Spider):
     def parse_vendor(self, response):
         """Parse vendor info, dish list and individual dish selectors."""
         html_string = response.data.get('html', None) # Splash whole page HTML
-        modals = response.data.get('modals', None) # Splash Modal elements HTML table
+        topping_selectors = response.data.get('topping_selectors', None) # Splash Modal elements HTML table
         soup = bs(html_string, 'html.parser')
         vendor_data = {}
 
@@ -93,7 +93,8 @@ class MainSpider(scrapy.Spider):
         vendor_data['address'] = panel.select_one('p.vendor-location').text.strip()
 
         ## Parse Dishses
-        dish_categories = [x.text.strip() for x in soup.select('div.dish-category-header')]
+        dish_categories = [x.text.strip() for x in soup.select(
+            'div.dish-category-header h2.dish-category-title')]
         dish_name_hash_map = {x: True for x in 
             soup.select('div.dish-card div.dish-info h3.dish-name')}
         dish_data = {'dishes': [], 'dish_categories': dish_categories}
@@ -126,44 +127,40 @@ class MainSpider(scrapy.Spider):
             'vendor': vendor_data,
             'dishes': dish_data['dishes'],
             'dish_categories': dish_data['dish_categories'],
-            'toppings': None,
+            'topping_selectors': self.parse_topping_selectors(
+                topping_selectors, dish_name_hash_map),
         }
 
     def parse_topping_selectors(self, topping_selectors, hash_map):
-        # if not topping_selectors: return
-        return []
+        """Parse topping selectors and their options."""
 
-    def parse_modal2(self, modal):
-        html = bs(modal, 'html.parser') if modal else None
-        if not html: return None
-        content = {}
-        # Topping Selection
-        topping_selections = html.select('.toppings .product-topping-list')
-        for selection in topping_selections or []:
-            selection_title = selection.select_one('span.product-topping-list-title-text').text.strip()
-            options = selection.select('.js-topping-options .js-topping-option-radio')
+        parsed_selectors = {}
+        for topping_id, html in topping_selectors.items():
+            soup = bs(html, 'html.parser')
+            class_names = soup.select_one('div.topping').attrs['class']
+
+            required = True if 'selection-required' in class_names else False
+            checkbox = True if 'topicOptionCheckbox' in class_names else False
+            description = soup.select_one('span.product-topping-list-title-text')
+            indication = soup.select_one('p.product-topping-list-indication')
+
             parsed_options = []
+            radio_type = 'checkbox' if checkbox else 'radio'
+            options = soup.select(f'div.js-topping-option-{radio_type}')
             for option in options:
-                name = option.select_one('span.radio-text')
+                name = option.select_one(f'span.{radio_type}-text')
                 price = option.select_one('span.product-topping-price')
                 parsed_options.append({
                     'name': name.text.strip(),
                     'price': price.text.strip() if price else None,
                 })
-            content[selection_title] = parsed_options
-        # Variation Selection (rare)
-        variation_selections = html.select('.product-variations .product-topping-list.js-variation-selector')
-        for selection in variation_selections or []:
-            selection_title = selection.select_one('span.product-topping-list-title-text').text.strip()
-            options = selection.select('.product-topping-item')
-            parsed_options = []
-            for option in options:
-                name = option.select_one('span.radio-text')
-                price = option.select_one('span.product-topping-price')
-                parsed_options.append({
-                    'name': name.text.strip(),
-                    'price': price.text.strip() if price else None,
-                })
-            content[selection_title] = parsed_options
 
-        return content
+            parsed_selectors[int(topping_id)] = {
+                'required': required,
+                'checkbox': checkbox,
+                'description': description.text.strip() if description else None,
+                'indication': indication.text.strip() if indication else None,
+                'options': parsed_options,
+            }
+
+        return parsed_selectors  
