@@ -34,9 +34,10 @@ class Dish(DeclarativeBase):
 
     id = Column(Integer, primary_key=True)
     name = Column('name', String)
-    category = Column('category', String)
     description = Column('description', String)
     image = Column('image', String)
+    price = Column('price', String)
+    category = Column('category', String)
     vendor_id = Column(Integer, ForeignKey('vendors.id'))
 
     vendor = relationship("Vendor", back_populates="dishes")

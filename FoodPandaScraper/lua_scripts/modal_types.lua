@@ -13,16 +13,6 @@ function main(splash)
             return url.dataset.imgUrl.match(/\d+.\d+,\d+.\d+/);
         }
     ]])
-    local menu_item_has_modal_content = splash:jsfunc([[
-        function(el) {
-            var json = JSON.parse(el.dataset.object);
-            if (
-                json.product_variations[0].topping_ids.length
-                || json.product_variations.length > 1
-            ) return true;
-            return false;
-        }
-    ]])
     local dish_modal_content = splash:jsfunc([[
         function(el) {
             var json = JSON.parse(el.dataset.object);
@@ -116,22 +106,10 @@ function main(splash)
                     if results.click_all_variations then
                         modals[i][j] = 'click all variations'
                     else
-                        modals[i][j] = 'click only first'
+                        modals[i][j] = 'click first variation'
                     end
                 end
             end
-
-            -- local has_topping = menu_item_has_modal_content(item)
-            -- if has_topping then
-            --     modals[i] = modals[i] or {}
-            --     local item_name = item:querySelector('h3.dish-name.fn.p-name > span').node.textContent
-            --     item:click{}
-            --     splash:wait(math.random(1.4, 1.7))
-            --     local modal_html = splash:select('#choices-toppings-modal .modal-body').node.outerHTML
-            --     splash:send_keys('<Escape>')
-            --     splash:wait(math.random(1.4, 1.7))
-            --     modals[i][j] = { item_name = item_name, modal_content = modal_html }
-            -- end
         end
     end
 

@@ -25,16 +25,16 @@ class VendorPipeline(object):
             session.add(vendor)
             vendor_id = session.query(Vendor).filter(Vendor.url == item['vendor']['url']).first().id
             dish_objects = []
-            for category, dishes in item['dish_list'].items():
-                for dish in dishes:
-                    dish_instance = Dish(
-                        name=dish['name'],
-                        category=category,
-                        description=dish['description'],
-                        image=dish['image'],
-                        vendor_id=vendor_id
-                    )
-                    dish_objects.append(dish_instance)
+            for dish in item['dishes']:
+                dish_instance = Dish(
+                    name=dish['name'],
+                    description=dish['description'],
+                    image=dish['image'],
+                    price=dish['price'],
+                    category=dish['category'],
+                    vendor_id=vendor_id
+                )
+                dish_objects.append(dish_instance)
             session.add_all(dish_objects)
             session.commit()
         except:
