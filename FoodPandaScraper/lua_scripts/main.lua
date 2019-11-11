@@ -1,13 +1,8 @@
 function main(splash)
-    treat = require("treat")
-    splash.private_mode_enabled = false
-    assert(splash:go(splash.args.url))
-    splash:wait(2)
-
     ---------------------------------------------------------------------------
     -- JS Helpers
     ---------------------------------------------------------------------------
-    local coordinates = splash:jsfunc([[
+    local get_coordinates = splash:jsfunc([[
         function() {
             var url = document.querySelector('img.map');
             return url.dataset.imgUrl.match(/\d+.\d+,\d+.\d+/);
@@ -18,7 +13,7 @@ function main(splash)
             return el.dataset.toppingId;
         }
     ]])
-    local dish_modal_content = splash:jsfunc([[
+    local check_dish_modal_content = splash:jsfunc([[
         function(el) {
             var json = JSON.parse(el.dataset.object);
             var variations = json.product_variations;
@@ -86,26 +81,28 @@ function main(splash)
     ---------------------------------------------------------------------------
     -- Lua Script
     ---------------------------------------------------------------------------
-    local response = {}
-    -- Submit Address and get page HTML
-    local coords = coordinates()
-    -- local address = assert(splash:select('.vendor-location')).node.textContent
+    splash.private_mode_enabled = false --some elements don't load in private mode
+    assert(splash:go(splash.args.url))
+    splash:wait(1.95)
+    splash:set_viewport_full()
+    
+    -- Submit Address (needed to click on dishes with modals)
     local address_input = assert(splash:select('.restaurants-search-form__input'))
     local address_verify_button = assert(splash:select('.restaurants-search-form__button--full'))
-    splash:set_viewport_full()
+    local coords = get_coordinates()
     address_input:mouse_click{}
     splash:send_text(coords)
     address_verify_button:mouse_click{}
-    splash:wait(1.9)
-    response['html'] = splash:html()
+    splash:wait(1.95)
+    
+    -- Response Table
+    local response = {}
+    response.html = splash:html()
+    response.topping_selectors = {}
+    local topping_selectors = response.topping_selectors
 
-    -- Click items with modal content and store topping_selectors
-    local topping_selectors = {}
-    response['topping_selectors'] = topping_selectors
-
-    -- local func
-    local add_topping_selectors = function()
-        local modal = splash:select('#choices-toppings-modal .modal-body')
+    -- Extract topping selector outerHTML
+    local function add_topping_selectors(modal)
         local toppings = modal:querySelectorAll('div.topping')
         for _, topping in ipairs(toppings) do
             local topping_container = topping:querySelector('div.product-topping-list')
@@ -113,45 +110,45 @@ function main(splash)
             topping_selectors[topping_id] = topping_selectors[topping_id] or topping.node.outerHTML
         end
     end
-    -- local func
-    local has_new_toppings = function(map)
+    -- Topping Selectors can be shared by multiple dishes
+    local function has_new_toppings(map)
         for topping_id, _ in pairs(map) do
             if not topping_selectors[topping_id] then return true end;
         end
         return false;
     end
 
-    -- Loop over all dishes to get topping selectors
+    -- Loop over all dishes modals (topping selectors)
     local dishes = splash:select_all('div.dish-card.menu__item')
     for _, dish in ipairs(dishes) do
-        local dish_name = dish:querySelector('h3.dish-name.fn.p-name > span').node.textContent
-        local results = dish_modal_content(dish)
-        
-        -- Dish has modal
+        local results = check_dish_modal_content(dish)
+        -- Only parse if topping_ids are new
         if results.modal and has_new_toppings(results.topping_id_map) then
+            -- Open Modal
             dish:click{}
-            while not is_modal_open() do
-                splash:wait(math.random(0.2, 0.4))
-            end
+            while not is_modal_open() do splash:wait(math.random(0.2, 0.25)) end
+            splash:wait(math.random(2.2, 2.4))
             local modal = splash:select('#choices-toppings-modal .modal-body')
-            if not results.only_toppings and not results.only_variations then
+            -- Add Topping Selectors if present
+            if not results.only_toppings then
+                -- variation elements get replaced after every variation selection
                 local variations = modal:querySelectorAll('div.product-topping-item')
-                for _, variation in ipairs(variations) do
+                for variation_num, _ in ipairs(variations) do
+                    local variation = modal:querySelectorAll(
+                        'div.product-topping-item .radio-box.variation')[variation_num]
                     variation:click{}
-                    splash:wait(math.random(0.5, 0.7))
-                    add_topping_selectors()
-                    if not results.click_all_variations then
-                        break;
-                    end
+                    splash:wait(math.random(1.5, 1.7))
+                    add_topping_selectors(modal)
+                    -- If all variations have the same toppings stop here
+                    if not results.click_all_variations then break end
                 end
             elseif results.only_toppings then
-                add_topping_selectors()
+                add_topping_selectors(modal)
             end
-            -- done, close modal
+            -- Close Modal
             splash:send_keys('<Escape>')
-            while is_modal_open() do
-                splash:wait(math.random(0.2, 0.4))
-            end
+            while is_modal_open() do splash:wait(math.random(0.2, 0.25)) end
+            splash:wait(math.random(1, 1.2))
         end
     end
 
