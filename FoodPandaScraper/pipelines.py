@@ -26,9 +26,30 @@ class VendorPipeline(object):
             vendor = Vendor(**item['vendor'])
             session.add(vendor)
             vendor_id = session.query(Vendor).filter(Vendor.url == item['vendor']['url']).first().id
+            
+            topping_objects = []
+            for topping_id, topping in item['topping_selectors'].items():
+                topping_instance = Topping(
+                    id=topping_id,
+                    required=topping['required'],
+                    checkbox=topping['checkbox'],
+                    description=topping['description'],
+                    indication=topping['indication']
+                )
+                for option in topping['options']:
+                    option_instance = Option(
+                        name=option['name'],
+                        price=option['price']
+                    )
+                    topping_instance.options.append(option_instance)
+                topping_objects.append(topping_instance)
+            session.add_all(topping_objects)
+            session.commit()
+            
             dish_objects = []
             for dish in item['dishes']:
                 dish_instance = Dish(
+                    id=dish['id'],
                     name=dish['name'],
                     description=dish['description'],
                     image=dish['image'],
@@ -36,6 +57,15 @@ class VendorPipeline(object):
                     category=dish['category'],
                     vendor_id=vendor_id
                 )
+                for variation in dish['variations']:
+                    variation_instance = Variation(
+                        id=variation['variation_id']
+                    )
+                    for topping_id in variation['topping_ids']:
+                        topping = session.query(Topping).filter(Topping.id == int(topping_id)).first()
+                        variation_instance.toppings.append(topping)
+
+                    dish_instance.variations.append(variation_instance)
                 dish_objects.append(dish_instance)
             session.add_all(dish_objects)
             session.commit()

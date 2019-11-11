@@ -115,6 +115,7 @@ class MainSpider(scrapy.Spider):
                 price = dish.select_one('span.price.p-price')
                 # Append parsed fields
                 dish_data['dishes'].append({
+                    'id': dish_data_object['id'],
                     'name': name.text.strip() if name else None,
                     'description': description.text.strip() if description else None,
                     'image': image.get('data-src', None) if image else None,
