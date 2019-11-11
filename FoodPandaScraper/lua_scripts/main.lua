@@ -26,21 +26,20 @@ function main(splash)
             var results = {
                 modal: true,
                 only_toppings: false,
-                only_variations: false,
                 click_all_variations: false,
             };
+            var topping_id_map = {}
 
             if (variations.length > 1) {
-                results.only_variations = true;
-
+                results.modal = false;
                 for (var i = 0; i < variations.length; i++) {
                     if (variations[i].topping_ids.length) {
-                        results.only_variations = false;
+                        results.modal = true;
                         break;
                     }
                 }
 
-                if (!results.only_variations) {
+                if (results.modal) {
                     for (var i = 1; i < variations.length; i++) {
                         if (
                             JSON.stringify(variations[i-1].topping_ids) 
@@ -50,17 +49,37 @@ function main(splash)
                             break;
                         }
                     }
+
+                    for (var i = 0; i < variations.length; i++) {
+                        var topping_ids = variations[i].topping_ids;
+                        for (var j = 0; j < topping_ids.length; j++) {
+                            var topping_id = topping_ids[i];
+                            topping_id_map[topping_id] = true;
+                        }
+                    }
                 } 
             } else {
                 var topping_ids = variations[0].topping_ids;
                 if (topping_ids.length) {
                     results.only_toppings = true;
+                    for (var i = 0; i < topping_ids.length; i++) {
+                        var topping_id = topping_ids[i];
+                        topping_id_map[topping_id] = true;
+                    }
                 } else {
                     results.modal = false;
                 }
             }
-
+            results.topping_id_map = topping_id_map;
             return results;
+        }
+    ]])
+    local is_modal_open = splash:jsfunc([[
+        function() {
+            var display = document.querySelector('#choices-toppings-modal')
+            if (!display) return false;
+            
+            return display.style.display === 'none' ? false : true;
         }
     ]])
 
@@ -85,13 +104,21 @@ function main(splash)
     response['topping_selectors'] = topping_selectors
 
     -- local func
-    local function add_topping_selectors(modal)
+    local add_topping_selectors = function()
+        local modal = splash:select('#choices-toppings-modal .modal-body')
         local toppings = modal:querySelectorAll('div.topping')
         for _, topping in ipairs(toppings) do
             local topping_container = topping:querySelector('div.product-topping-list')
             local topping_id = get_topping_id(topping_container)
-            topping_selectors[topping_id] = topping.node.outerHTML
+            topping_selectors[topping_id] = topping_selectors[topping_id] or topping.node.outerHTML
         end
+    end
+    -- local func
+    local has_new_toppings = function(map)
+        for topping_id, _ in pairs(map) do
+            if not topping_selectors[topping_id] then return true end;
+        end
+        return false;
     end
 
     -- Loop over all dishes to get topping selectors
@@ -101,29 +128,30 @@ function main(splash)
         local results = dish_modal_content(dish)
         
         -- Dish has modal
-        if results.modal then
+        if results.modal and has_new_toppings(results.topping_id_map) then
             dish:click{}
-            splash:wait(math.random(1.5, 2))
+            while not is_modal_open() do
+                splash:wait(math.random(0.2, 0.4))
+            end
             local modal = splash:select('#choices-toppings-modal .modal-body')
             if not results.only_toppings and not results.only_variations then
                 local variations = modal:querySelectorAll('div.product-topping-item')
-                if results.click_all_variations then
-                    for _, variation in ipairs(variations) do
-                        variation:click{}
-                        splash:wait(math.random(0.7, 1))
-                        add_topping_selectors(modal)
+                for _, variation in ipairs(variations) do
+                    variation:click{}
+                    splash:wait(math.random(0.5, 0.7))
+                    add_topping_selectors()
+                    if not results.click_all_variations then
+                        break;
                     end
-                else
-                    variations[1]:click{}
-                    splash:wait(math.random(0.7, 1))
-                    add_topping_selectors(modal)
                 end
             elseif results.only_toppings then
-                add_topping_selectors(modal)
+                add_topping_selectors()
             end
             -- done, close modal
             splash:send_keys('<Escape>')
-            splash:wait(math.random(1.4, 1.7))
+            while is_modal_open() do
+                splash:wait(math.random(0.2, 0.4))
+            end
         end
     end
 
