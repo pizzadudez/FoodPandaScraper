@@ -8,7 +8,7 @@
 import json
 from sqlalchemy.orm import sessionmaker, query
 from FoodPandaScraper.models import db_connect, create_tables
-from FoodPandaScraper.models import Vendor, Dish, Selector, Option
+from FoodPandaScraper.models import Vendor, Dish, Variation, Topping, Option
 
 class VendorPipeline(object):
     """Test Pipeline"""
