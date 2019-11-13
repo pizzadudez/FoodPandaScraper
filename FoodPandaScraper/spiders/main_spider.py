@@ -7,11 +7,13 @@ from scrapy.http import Request
 from scrapy.shell import inspect_response
 from scrapy_splash import SplashRequest
 
-from FoodPandaScraper.items import VendorItem
+from sqlalchemy.orm import sessionmaker, query
+from FoodPandaScraper.models import db_connect, create_tables
+from FoodPandaScraper.models import Vendor, Dish, Variation, Topping, Option
 
 
 dirpath = path.dirname(__file__)
-LUA_SCRIPT = path.abspath(path.join(dirpath, '..', 'lua_scripts\\main.lua'))
+LUA_SCRIPT = path.abspath(path.join(dirpath, '..', 'lua_scripts\\address.lua'))
 
 
 class MainSpider(scrapy.Spider):
@@ -19,34 +21,43 @@ class MainSpider(scrapy.Spider):
     script = open(LUA_SCRIPT, 'r').read()
     allowed_domains = ['foodpanda.ro']
     start_urls = [
-        'https://www.foodpanda.ro/chain/cw9yi/pizza-hut-delivery',
+        'https://www.foodpanda.ro',
+
+        # 'https://www.foodpanda.ro/chain/cw9yi/pizza-hut-delivery',
         # 'https://www.foodpanda.ro/restaurant/v5gi/azima',
         # 'https://www.foodpanda.ro/restaurant/v1js/hopaa',
         # 'https://www.foodpanda.ro/restaurant/v4rj/pizza-transilvania',
         # 'https://www.foodpanda.ro/restaurant/v5wn/pizza-adaggio',
         # 'https://www.foodpanda.ro/restaurant/v4yi/big-belly-vendor',
         # 'https://www.foodpanda.ro/restaurant/v1ok/taboo-doner',
+        # 'https://www.foodpanda.ro/chain/cj2cc/pizza-romana',
+
+        # 'https://www.foodpanda.ro/restaurant/v5ek/cedelicii-delivery',
+        # 'https://www.foodpanda.ro/restaurant/v0kk/log-out',
+        # 'https://www.foodpanda.ro/restaurant/v4pl/bonita',
     ]
-    # start_urls = [
-    #     'https://www.foodpanda.ro',
-    # ]
 
     def start_requests(self):
         """Starts the request chain."""
-        for url in self.start_urls:
-            yield SplashRequest(
-                url=url,
-                callback=self.parse_vendor,
-                endpoint='execute',
-                args={
-                    'lua_source': self.script,
-                    'timeout': 360,
-                    'html': 1,
-                }
-            )
+
+        self.engine = db_connect()
+        create_tables(self.engine)
+        self.Session = sessionmaker(bind=self.engine)
 
         # for url in self.start_urls:
-        #     yield Request(url=url, callback=self.crawl_cities)
+        #     yield SplashRequest(
+        #         url=url,
+        #         callback=self.parse_vendor,
+        #         endpoint='execute',
+        #         args={
+        #             'lua_source': self.script,
+        #             'timeout': 360,
+        #             'html': 1,
+        #         }
+        #     )
+
+        for url in self.start_urls:
+            yield Request(url=url, callback=self.crawl_cities)
 
     def crawl_cities(self, response):
         """Initiate vendor crawl for all cities."""
@@ -54,15 +65,17 @@ class MainSpider(scrapy.Spider):
         response_html = response.text
         soup = bs(response_html, 'html.parser')
         city_list = soup.select('section.home-cities a.city-tile')
-        city_urls = [response.url + x['href'] for x in city_list]
+        city_urls = [response.url + x['href'].strip().lower() for x in city_list]
 
         for city_url in city_urls:
-            request = Request(
+            yield Request(
                 url=city_url,
                 callback=self.crawl_vendors,
-                meta={'parent': city_url}
+                meta={
+                    'city_url': city_url,
+                    'start_url': response.url,
+                }
             )
-            yield request
 
     def crawl_vendors(self, response):
         """Initiate vendor parse for all vendors."""
@@ -70,11 +83,28 @@ class MainSpider(scrapy.Spider):
         response_html = response.text
         soup = bs(response_html, 'html.parser')
         vendor_list = soup.select('div.restaurants-container ul.vendor-list > li > a')
-        vendor_urls = [x['href'] for x in vendor_list]
+        vendors = [{'id': x['data-vendor-id'], 'url': response.meta['start_url'] + x['href']} 
+            for x in vendor_list]
         
-        city_url = response.meta['parent']
-        yield {'name': vendor_urls[0]}
+        for vendor_num, vendor in enumerate(vendors):
+            if vendor_num > 0: break
+            yield SplashRequest(
+                url=vendor['url'],
+                callback=self.parse_vendor,
+                endpoint='execute',
+                args={
+                    'lua_source': self.script,
+                    'timeout': 60,
+                    'html': 1,
+                }
+            )
 
+        # # Debug
+        # yield {
+        #     'city_url': response.meta['city_url'],
+        #     'vendors': vendors,
+        # }
+        
     def parse_vendor(self, response):
         """Parse vendor info, dish list and individual dish selectors."""
         html_string = response.data.get('html', None) # Splash whole page HTML

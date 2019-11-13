@@ -7,8 +7,6 @@ from scrapy.http import Request
 from scrapy.shell import inspect_response
 from scrapy_splash import SplashRequest
 
-from FoodPandaScraper.items import VendorItem
-
 
 dirpath = path.dirname(__file__)
 LUA_SCRIPT = path.abspath(path.join(dirpath, '..', 'lua_scripts\\main.lua'))

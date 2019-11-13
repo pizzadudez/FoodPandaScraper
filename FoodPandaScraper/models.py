@@ -27,7 +27,7 @@ class Vendor(Base):
     coordinates = Column('coordinates', String)
     delivery_times = Column('delivery_times', String)
     # Children
-    dishes = relationship("Dish", back_populates="vendor")
+    dishes = relationship("Dish", back_populates="vendor", cascade='delete')
 
 
 class Dish(Base):
@@ -43,7 +43,7 @@ class Dish(Base):
     # Parent
     vendor = relationship("Vendor", back_populates="dishes")
     # Children
-    variations = relationship('Variation', back_populates='dish')
+    variations = relationship('Variation', back_populates='dish', cascade='delete')
 
 
 variations_toppings = Table('variations_toppings', Base.metadata,
@@ -84,7 +84,7 @@ class Topping(Base):
         back_populates='toppings'    
     )
     # Children
-    options = relationship('Option', back_populates='topping')
+    options = relationship('Option', back_populates='topping', passive_deletes=True)
 
 
 class Option(Base):
@@ -93,43 +93,6 @@ class Option(Base):
     id = Column(Integer, primary_key=True)
     name = Column('name', String)
     price = Column('price', String)
-    topping_id = Column(Integer, ForeignKey('toppings.id'))
+    topping_id = Column(Integer, ForeignKey('toppings.id', ondelete="cascade"))
     # Parent
     topping = relationship('Topping', back_populates='options')
-
-
-# class Selector(Base):
-#     __tablename__ = 'selectors'
-
-#     id = Column(Integer, primary_key=True)
-#     dish_id = Column(Integer, ForeignKey('dishes.id'))
-
-#     dish = relationship("Dish", back_populates="selectors")
-
-# Dish.selectors = relationship("Selector", order_by=Selector.id, back_populates="dish")
-
-
-# class Option(Base):
-#     __tablename__ = 'options'
-
-#     id = Column(Integer, primary_key=True)
-#     name = Column('name', String)
-#     price = Column('price', String)
-#     selector_id = Column(Integer, ForeignKey('selectors.id'))
-
-#     selector = relationship("Selector", back_populates="options")
-
-# Selector.options = relationship("Option", order_by=Option.id, back_populates="selector")
-
-
-# class Deals(Base):
-#     __tablename__ = "deals"
-
-#     id = Column(Integer, primary_key=True)
-#     name = Column('name', String)
-#     # title = Column('title', String)
-#     # link = Column('link', String, nullable=True)
-#     # location = Column('location', String, nullable=True)
-#     # original_price = Column('original_price', String, nullable=True)
-#     # price = Column('price', String, nullable=True)
-#     # end_date = Column('end_date', DateTime, nullable=True)

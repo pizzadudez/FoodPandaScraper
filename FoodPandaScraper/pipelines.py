@@ -23,12 +23,24 @@ class VendorPipeline(object):
         if not item.get('vendor', None):
             return item
         try:
+            # Delete old version 
+            found = session.query(Vendor).filter(Vendor.url == item['vendor']['url']).first()
+            if found:
+                session.delete(found)
+                session.commit()
+
             vendor = Vendor(**item['vendor'])
             session.add(vendor)
             vendor_id = session.query(Vendor).filter(Vendor.url == item['vendor']['url']).first().id
             
             topping_objects = []
             for topping_id, topping in item['topping_selectors'].items():
+                # Delete vendor toppings if replacing whole vendor
+                if found:
+                    found_topping = session.query(Topping).filter(Topping.id == topping_id).first()
+                    if found_topping:
+                        session.delete(found_topping)
+                        session.commit()
                 topping_instance = Topping(
                     id=topping_id,
                     required=topping['required'],
