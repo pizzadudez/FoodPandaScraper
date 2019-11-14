@@ -8,7 +8,7 @@
 import json
 from sqlalchemy.orm import sessionmaker, query
 from FoodPandaScraper.models import db_connect, create_tables
-from FoodPandaScraper.models import Vendor, Dish, Variation, Topping, Option
+from FoodPandaScraper.models import City, Vendor, Dish, Variation, Topping, Option
 
 class PostgresPipeline(object):
     """Test Pipeline"""
@@ -23,6 +23,12 @@ class PostgresPipeline(object):
         if not item.get('vendor', None):
             return item
         try:
+            found_city = session.query(City).filter(City.id == item['vendor']['city_id']).first()
+            if not found_city:
+                city = City(id=item['vendor']['city_id'], name=item['city_name'])
+                session.add(city)
+                session.commit()
+                
             # Delete old version 
             found = session.query(Vendor).filter(Vendor.url == item['vendor']['url']).first()
             if found:
@@ -71,7 +77,9 @@ class PostgresPipeline(object):
                 )
                 for variation in dish['variations']:
                     variation_instance = Variation(
-                        id=variation['variation_id']
+                        id=variation['id'],
+                        name=variation['name'],
+                        price=variation['price']
                     )
                     for topping_id in variation['topping_ids']:
                         topping = session.query(Topping).filter(Topping.id == int(topping_id)).first()

@@ -15,6 +15,14 @@ def create_tables(engine):
     Base.metadata.create_all(engine)
 
 
+class City(Base):
+    __tablename__ = 'cities'
+    id = Column(Integer, primary_key=True)
+    name = Column('name', String)
+    # Children
+    vendors = relationship('Vendor', back_populates='city', cascade='delete')
+
+
 class Vendor(Base):
     __tablename__ = 'vendors'
 
@@ -25,7 +33,9 @@ class Vendor(Base):
     rating = Column('rating', String)
     address = Column('address', String)
     coordinates = Column('coordinates', String)
-    delivery_times = Column('delivery_times', String)
+    city_id = Column(Integer, ForeignKey('cities.id'))
+    # Parent
+    city = relationship('City', back_populates='vendors')
     # Children
     dishes = relationship("Dish", back_populates="vendor", cascade='delete')
 

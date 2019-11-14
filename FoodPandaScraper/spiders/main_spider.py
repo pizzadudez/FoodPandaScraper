@@ -9,7 +9,7 @@ from scrapy_splash import SplashRequest
 
 from sqlalchemy.orm import sessionmaker, query
 from FoodPandaScraper.models import db_connect, create_tables
-from FoodPandaScraper.models import Vendor, Dish, Variation, Topping, Option
+from FoodPandaScraper.models import City, Vendor, Dish, Variation, Topping, Option
 
 
 dirpath = path.dirname(__file__)
@@ -74,10 +74,7 @@ class MainSpider(scrapy.Spider):
             yield Request(
                 url=city_url,
                 callback=self.crawl_vendors,
-                meta={
-                    'city_url': city_url,
-                    'start_url': response.url,
-                }
+                meta={'start_url': response.url}
             )
 
     def crawl_vendors(self, response):
@@ -85,21 +82,23 @@ class MainSpider(scrapy.Spider):
 
         response_html = response.text
         soup = bs(response_html, 'html.parser')
+        city_name = soup.select_one(
+                '.hero-section-content .hero-section-text strong').text.strip()
         vendor_list = soup.select('div.restaurants-container ul.vendor-list > li > a')
-        vendors = [{'id': x['data-vendor-id'], 'url': response.meta['start_url'] + x['href']} 
-            for x in vendor_list]
+        vendor_urls = [response.meta['start_url'] + x['href'] for x in vendor_list]
         
-        for vendor_num, vendor in enumerate(vendors):
-            if vendor_num >= (self.limit or 100000) : break
+        for count, url in enumerate(vendor_urls):
+            if count >= (self.limit or 100_000) : break
             yield SplashRequest(
-                url=vendor['url'],
+                url=url,
                 callback=self.parse_vendor,
                 endpoint='execute',
                 args={
                     'lua_source': self.script,
                     'timeout': self.vendor_timeout,
                     'html': 1,
-                }
+                },
+                meta={'city_name': city_name}
             )
         
     def parse_vendor(self, response):
@@ -107,17 +106,23 @@ class MainSpider(scrapy.Spider):
         html_string = response.data.get('html', None) # Splash whole page HTML
         topping_selectors = response.data.get('topping_selectors', None) # Splash Modal elements HTML table
         soup = bs(html_string, 'html.parser')
-        vendor_data = {}
+        vendor = {}
 
         ## Parse Vendor
-        vendor_data['url'] = response.url
+        vendor_data = json.loads(soup.select_one('div.menu__list-wrapper')
+                .get('data-vendor', {}))
+        
+        vendor['id'] = vendor_data['id']
+        vendor['city_id'] = vendor_data['city_id']
+        vendor['coordinates'] = f"{vendor_data['latitude']},{vendor_data['longitude']}"
+        vendor['url'] = response.url
         description_modal = soup.select_one('div.modal.rich-description div.vendor-info-page')
-        # vendor_data['image'] = 
+        vendor['image'] = soup.select_one('div.vendor-header .hero-banner').get('data-src', None)
         info = description_modal.select_one('div.infos')
-        vendor_data['name'] = info.select_one('h1.vendor-name').text.strip()
-        vendor_data['rating'] = info.select_one('span.rating strong').text.strip()
+        vendor['name'] = vendor_data['name']
+        vendor['rating'] = vendor_data['rating']
         panel = description_modal.select_one('div.panel div.content')
-        vendor_data['address'] = panel.select_one('p.vendor-location').text.strip()
+        vendor['address'] = panel.select_one('p.vendor-location').text.strip()
 
         ## Parse Dishses
         dish_categories = [x.text.strip() for x in soup.select(
@@ -133,9 +138,13 @@ class MainSpider(scrapy.Spider):
                 # Select elements for dish fields
                 dish_data_object = json.loads(dish.get('data-object', '{}'))
                 variations = [{
-                        'variation_id': x['id'],
+                        'id': x['id'],
+                        'name': x['name'],
+                        'price': x['price'],
                         'topping_ids': x['topping_ids']
-                    } for x in dish_data_object['product_variations']]
+                        } for x in dish_data_object['product_variations']
+                        if len(x['topping_ids']) or
+                        len(dish_data_object['product_variations']) > 1]   
                 name = dish.select_one('h3.dish-name.fn.p-name')
                 description = dish.select_one('p.dish-description')
                 image = dish.select_one('div.photo')
@@ -152,7 +161,8 @@ class MainSpider(scrapy.Spider):
                 })
 
         yield {
-            'vendor': vendor_data,
+            'city_name': response.meta.get('city_name', None),
+            'vendor': vendor,
             'dishes': dish_data['dishes'],
             'dish_categories': dish_data['dish_categories'],
             'topping_selectors': self.parse_topping_selectors(
