@@ -71,10 +71,10 @@ function main(splash)
     ]])
     local is_modal_open = splash:jsfunc([[
         function() {
-            var display = document.querySelector('#choices-toppings-modal');
-            if (!display) return false;
+            var modal = document.querySelector('#choices-toppings-modal');
+            if (!modal) return false;
             
-            return display.style.display === 'block' ? true : false;
+            return modal.style.display === 'block' ? true : false;
         }
     ]])
     local is_map_modal_open = splash:jsfunc([[
@@ -147,6 +147,14 @@ function main(splash)
         end
         return false;
     end
+    -- Modal wait timeout
+    local function modal_open_timeout()
+        local tries = 20
+        while tries > 0 and not is_modal_open() do
+            splash:wait(math.random(0.2, 0.25))
+            tries = tries - 1
+        end
+    end
 
 
     -- Submit Address (needed to click on dishes with modals)
@@ -197,8 +205,13 @@ function main(splash)
         if results.modal and has_new_toppings(results.topping_id_map) then
             -- Open Modal
             dish:click{}
-            while not is_modal_open() do splash:wait(math.random(0.2, 0.25)) end
-            splash:wait(math.random(2.2, 2.4))
+            modal_open_timeout()
+            splash:wait(math.random(1.2, 1.4))
+            if not is_modal_open() then
+                debug('Toppings Modal could not be opened', nil)
+                return response 
+            end
+
             local modal = splash:select('#choices-toppings-modal .modal-body')
             -- Add Topping Selectors if present
             if not results.only_toppings then

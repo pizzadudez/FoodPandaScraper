@@ -37,7 +37,7 @@ ROBOTSTXT_OBEY = False
 # See also autothrottle settings and docs
 DOWNLOAD_DELAY = 1
 # The download delay setting will honor only one of:
-CONCURRENT_REQUESTS_PER_DOMAIN = 1
+CONCURRENT_REQUESTS_PER_DOMAIN = 3
 #CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
@@ -65,7 +65,6 @@ DOWNLOADER_MIDDLEWARES = {
     'scrapy_splash.SplashCookiesMiddleware': 723,
     'scrapy_splash.SplashMiddleware': 725,
     'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
-
 }
 
 SPLASH_URL = 'http://localhost:8050/'
@@ -82,8 +81,8 @@ HTTPCACHE_STORAGE = 'scrapy_splash.SplashAwareFSCacheStorage'
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'FoodPandaScraper.pipelines.FoodpandascraperPipeline': 100,
-   'FoodPandaScraper.pipelines.VendorPipeline': 200,
+   'FoodPandaScraper.pipelines.JsonPipeline': 100,
+   'FoodPandaScraper.pipelines.PostgresPipeline': 200,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

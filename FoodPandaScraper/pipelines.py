@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker, query
 from FoodPandaScraper.models import db_connect, create_tables
 from FoodPandaScraper.models import Vendor, Dish, Variation, Topping, Option
 
-class VendorPipeline(object):
+class PostgresPipeline(object):
     """Test Pipeline"""
     def __init__(self):
         """Init db conn and sessionmaker, creates deals table."""
@@ -89,7 +89,7 @@ class VendorPipeline(object):
         return item
 
 
-class FoodpandascraperPipeline(object):
+class JsonPipeline(object):
     def open_spider(self, spider):
         self.file = open('output/scrapped.json', 'w')
         self.file.write("[\n")

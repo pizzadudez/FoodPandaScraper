@@ -78,8 +78,8 @@ function main(splash)
             var el = document.querySelector('div.menu__list-wrapper')
             var data = JSON.parse(el.dataset.vendor)
             return {
-                lat: data.latitude,
-                long: data.longitude
+                latitude: data.latitude,
+                longitude: data.longitude
             }
         }
     ]])
@@ -128,10 +128,11 @@ function main(splash)
     local function debug(text, png)
         table.insert(response.debug, {text = text, content = png})
     end
+
     -- Submit Address, if it fails retry with modified coords
     local function verify_address()
         local coords = get_coords()
-        submit_coords(coords.lat, coords.long)
+        submit_coords(coords.latitude, coords.longitude)
         splash:wait(2)
 
         if is_map_modal_open() then
@@ -141,7 +142,7 @@ function main(splash)
             local delta = 0.004
             local tries = 10
             while not is_address_verified() do
-                local lat, long = coords.lat, coords.long
+                local lat, long = coords.latitude, coords.longitude
                 -- modify coords
                 if x_axis then lat = lat + (positive * delta)
                 else  long = long + (positive * delta)
@@ -226,9 +227,9 @@ function main(splash)
 
             -- Add Topping Selectors
             if not results.only_toppings then
+                -- variation elements get replaced after every variation selection
                 local variations = modal:querySelectorAll('div.product-topping-item')
                 for variation_num, _ in ipairs(variations) do
-                    -- variation elements get replaced after every click
                     local variation = modal:querySelectorAll(
                         'div.product-topping-item .radio-box.variation')[variation_num]
                     variation:click{}
@@ -237,7 +238,7 @@ function main(splash)
                     -- If all variations have the same toppings stop here
                     if not results.click_all_variations then break end
                 end
-            else
+            elseif results.only_toppings then
                 add_topping_selectors(modal)
             end
         end

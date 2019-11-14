@@ -13,13 +13,14 @@ from FoodPandaScraper.models import Vendor, Dish, Variation, Topping, Option
 
 
 dirpath = path.dirname(__file__)
-LUA_SCRIPT = path.abspath(path.join(dirpath, '..', 'lua_scripts\\address.lua'))
+LUA_SCRIPT = path.abspath(path.join(dirpath, '..', 'lua_scripts\\main.lua'))
 
 
 class MainSpider(scrapy.Spider):
     name = 'main_spider'
     script = open(LUA_SCRIPT, 'r').read()
     allowed_domains = ['foodpanda.ro']
+    vendor_timeout = 120
     start_urls = [
         'https://www.foodpanda.ro',
 
@@ -35,7 +36,9 @@ class MainSpider(scrapy.Spider):
         # 'https://www.foodpanda.ro/restaurant/v5ek/cedelicii-delivery',
         # 'https://www.foodpanda.ro/restaurant/v0kk/log-out',
         # 'https://www.foodpanda.ro/restaurant/v4pl/bonita',
+        # 'https://www.foodpanda.ro/restaurant/v7qc/pizza-napoli-cuptor-cu-lemne',
     ]
+    limit = 1 # per city limit of vendors (debugging)
 
     def start_requests(self):
         """Starts the request chain."""
@@ -44,6 +47,9 @@ class MainSpider(scrapy.Spider):
         create_tables(self.engine)
         self.Session = sessionmaker(bind=self.engine)
 
+        for url in self.start_urls:
+            yield Request(url=url, callback=self.crawl_cities)
+
         # for url in self.start_urls:
         #     yield SplashRequest(
         #         url=url,
@@ -51,13 +57,10 @@ class MainSpider(scrapy.Spider):
         #         endpoint='execute',
         #         args={
         #             'lua_source': self.script,
-        #             'timeout': 360,
+        #             'timeout': self.vendor_timeout,
         #             'html': 1,
         #         }
         #     )
-
-        for url in self.start_urls:
-            yield Request(url=url, callback=self.crawl_cities)
 
     def crawl_cities(self, response):
         """Initiate vendor crawl for all cities."""
@@ -87,23 +90,17 @@ class MainSpider(scrapy.Spider):
             for x in vendor_list]
         
         for vendor_num, vendor in enumerate(vendors):
-            if vendor_num > 0: break
+            if vendor_num >= (self.limit or 100000) : break
             yield SplashRequest(
                 url=vendor['url'],
                 callback=self.parse_vendor,
                 endpoint='execute',
                 args={
                     'lua_source': self.script,
-                    'timeout': 60,
+                    'timeout': self.vendor_timeout,
                     'html': 1,
                 }
             )
-
-        # # Debug
-        # yield {
-        #     'city_url': response.meta['city_url'],
-        #     'vendors': vendors,
-        # }
         
     def parse_vendor(self, response):
         """Parse vendor info, dish list and individual dish selectors."""
